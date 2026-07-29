@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   // TypeScript strictness enforced at build time
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
