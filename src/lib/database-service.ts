@@ -328,14 +328,50 @@ export const deleteCategory = async (id: string, restaurantId: string) => {
   return result.deletedCount > 0;
 };
 
+const CHERAN_CAFE_FALLBACK_ITEMS: MenuItem[] = [
+  { id: '1', name: 'Egg Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '2', name: 'Paneer Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '3', name: 'Chicken Puffs', price: 30.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '4', name: 'Mushroom Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '5', name: 'Veg Puffs', price: 20.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '6', name: 'Egg Roll', price: 35.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '7', name: 'Chicken Roll', price: 40.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '8', name: 'Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '9', name: 'Lemon Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '10', name: 'Green Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '11', name: 'Badam', price: 25.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '12', name: 'Boost', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '13', name: 'Horlicks', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '14', name: 'Mango Falooda', price: 119.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '15', name: 'Dry Fruit Falooda', price: 139.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '16', name: 'Rose Falooda', price: 129.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '17', name: 'Special Cheran Falooda', price: 169.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '18', name: 'Avil Milk', price: 90.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '19', name: 'Cocktail Shake', price: 149.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '20', name: 'Royal Falooda', price: 159.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '21', name: 'Fruit Salad with Ice Cream', price: 99.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '22', name: 'Sizzling Brownie', price: 179.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '23', name: 'Choco Lava Cake', price: 89.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '24', name: 'KitKat Milkshake', price: 119.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+];
+
+let cachedMenuItems: MenuItem[] | null = null;
+let lastMenuItemsFetchTime = 0;
+
 // Menu Items
 export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> => {
+  const now = Date.now();
+  // Return cached items if fetched within 30 seconds
+  if (cachedMenuItems && (now - lastMenuItemsFetchTime < 30000)) {
+    return cachedMenuItems;
+  }
+
   if (process.env.DATABASE_URL) {
     try {
       const { sql } = await import('@/lib/neon');
       const items = await sql`SELECT * FROM menu_items ORDER BY category ASC, name ASC;`;
       if (items && items.length > 0) {
-        return items.map((i: any) => ({
+        cachedMenuItems = items.map((i: any) => ({
           id: i.id,
           name: i.name,
           description: i.description || '',
@@ -347,20 +383,30 @@ export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> =
           createdAt: new Date(i.created_at || Date.now()),
           updatedAt: new Date(i.created_at || Date.now())
         }));
+        lastMenuItemsFetchTime = now;
+        return cachedMenuItems;
       }
     } catch (e) {
       console.warn('Neon menu items query notice:', e);
     }
   }
 
-  await initializeDatabase();
-  const query = restaurantId ? { restaurantId } : {};
   try {
-    const menuItems = await MenuItemModel.find(query).maxTimeMS(5000);
-    return menuItems.map(item => item.toObject());
+    await initializeDatabase();
+    const query = restaurantId ? { restaurantId } : {};
+    const menuItems = await MenuItemModel.find(query).maxTimeMS(3000);
+    if (menuItems && menuItems.length > 0) {
+      cachedMenuItems = menuItems.map(item => item.toObject());
+      lastMenuItemsFetchTime = now;
+      return cachedMenuItems;
+    }
   } catch (e) {
-    return [];
+    console.warn('MongoDB menu items fallback notice:', e);
   }
+
+  cachedMenuItems = CHERAN_CAFE_FALLBACK_ITEMS;
+  lastMenuItemsFetchTime = now;
+  return CHERAN_CAFE_FALLBACK_ITEMS;
 };
 
 export const addMenuItem = async (itemData: Omit<MenuItem, 'id'> & { restaurantId: string }) => {

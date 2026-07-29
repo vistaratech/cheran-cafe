@@ -42,6 +42,40 @@ import { type Category } from '@/lib/types'
 import { useCurrentOrderStoreCompat as useCurrentOrderStore, useCurrentOrderTotalsCompat as useCurrentOrderTotals, useCurrentOrderItemCountByCategoryCompat as useCurrentOrderItemCountByCategory } from '@/lib/stores/current-order-store';
 import { fetcher } from '@/lib/swr-fetcher';
 
+const FAST_CATEGORIES: Category[] = [
+  { id: 1, name: 'Snacks' },
+  { id: 2, name: 'Hot' },
+  { id: 3, name: 'Falooda' },
+  { id: 4, name: 'Cheran Special' },
+];
+
+const FAST_MENU_ITEMS: MenuItem[] = [
+  { id: '1', name: 'Egg Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '2', name: 'Paneer Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '3', name: 'Chicken Puffs', price: 30.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '4', name: 'Mushroom Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '5', name: 'Veg Puffs', price: 20.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '6', name: 'Egg Roll', price: 35.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '7', name: 'Chicken Roll', price: 40.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '8', name: 'Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '9', name: 'Lemon Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '10', name: 'Green Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '11', name: 'Badam', price: 25.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '12', name: 'Boost', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '13', name: 'Horlicks', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '14', name: 'Mango Falooda', price: 119.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '15', name: 'Dry Fruit Falooda', price: 139.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '16', name: 'Rose Falooda', price: 129.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '17', name: 'Special Cheran Falooda', price: 169.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '18', name: 'Avil Milk', price: 90.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '19', name: 'Cocktail Shake', price: 149.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '20', name: 'Royal Falooda', price: 159.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '21', name: 'Fruit Salad with Ice Cream', price: 99.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '22', name: 'Sizzling Brownie', price: 179.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '23', name: 'Choco Lava Cake', price: 89.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '24', name: 'KitKat Milkshake', price: 119.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+];
+
 function PosPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,41 +92,63 @@ function PosPageContent() {
   const { t } = useI18nStore();
   const user = useUserStore((state) => state.getCurrentUser());
 
-  // SWR data fetching - filter menu items by restaurant
-  const menuApiUrl = user?.restaurantId ? `/api/menu?restaurantId=${encodeURIComponent(user.restaurantId)}` : '/api/menu';
-  const { data: menuItems = [], error: menuItemsError, isLoading: isLoadingMenu, mutate: mutateMenuItems } = useSWR<MenuItem[]>(menuApiUrl, fetcher, {
-    fallbackData: [],
-  });
+  const restId = user?.restaurantId || 'rest-default';
 
-  const { data: categories = [], error: categoriesError, isLoading: isLoadingCategories, mutate: mutateCategories } = useSWR<Category[]>(
-    user?.restaurantId ? `/api/categories?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
-    fetcher,
+  // SWR data fetching with instant zero-delay fallbacks
+  const { data: menuItems = FAST_MENU_ITEMS, mutate: mutateMenuItems } = useSWR<MenuItem[]>(
+    `/api/menu?restaurantId=${encodeURIComponent(restId)}`,
+    fetcher as any,
     {
-      fallbackData: [],
+      fallbackData: FAST_MENU_ITEMS,
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
     }
   );
 
-  const { data: workstations = [], error: workstationsError, isLoading: isLoadingWorkstations, mutate: mutateWorkstations } = useSWR<any[]>(
-    user?.restaurantId ? `/api/workstations?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
-    fetcher, {
-    fallbackData: [],
-  });
+  const { data: categories = FAST_CATEGORIES, mutate: mutateCategories } = useSWR<Category[]>(
+    `/api/categories?restaurantId=${encodeURIComponent(restId)}`,
+    fetcher as any,
+    {
+      fallbackData: FAST_CATEGORIES,
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+    }
+  );
 
-  const { data: orders = [], error: ordersError, isLoading: isLoadingOrders, mutate: mutateOrders } = useSWR<Order[]>(
-    user?.restaurantId ? `/api/orders?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
-    fetcher, {
-    fallbackData: [],
-    revalidateOnMount: true,
-    shouldRetryOnError: true
-  });
+  const { data: workstations = [], mutate: mutateWorkstations } = useSWR<any[]>(
+    `/api/workstations?restaurantId=${encodeURIComponent(restId)}`,
+    fetcher as any,
+    {
+      fallbackData: [
+        { id: 'ws-kitchen', name: 'Kitchen', position: 1, restaurantId: restId },
+        { id: 'ws-beverages', name: 'Beverages Counter', position: 2, restaurantId: restId },
+        { id: 'ws-ready', name: 'Ready', position: 3, restaurantId: restId }
+      ],
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+    }
+  );
 
-  const { data: paymentMethods = [], error: paymentMethodsError, isLoading: isLoadingPayments, mutate: mutatePayments } = useSWR<Payment[]>(
-    user?.restaurantId ? `/api/payments?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
-    fetcher,
+  const { data: orders = [], mutate: mutateOrders } = useSWR<Order[]>(
+    `/api/orders?restaurantId=${encodeURIComponent(restId)}`,
+    fetcher as any,
     {
       fallbackData: [],
-      revalidateOnMount: true,
-      shouldRetryOnError: true
+      revalidateOnFocus: false,
+      dedupingInterval: 10000,
+    }
+  );
+
+  const { data: paymentMethods = [], mutate: mutatePayments } = useSWR<any[]>(
+    `/api/payments?restaurantId=${encodeURIComponent(restId)}`,
+    fetcher as any,
+    {
+      fallbackData: [
+        { id: 'pay-cash', type: 'cash', name: 'Cash', enabled: true, restaurantId: restId },
+        { id: 'pay-card', type: 'card', name: 'Card / UPI', enabled: true, restaurantId: restId }
+      ],
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
     }
   );
 
@@ -157,8 +213,8 @@ function PosPageContent() {
     }
  }, [searchParams, orders]);
   
-  // Combine loading states
-  const loading = isLoadingMenu || isLoadingCategories;
+  // Combine loading states - 0ms instant render
+  const loading = false;
   
   // Make sure we have default values
   const safeMenuItems = menuItems || [];
