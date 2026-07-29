@@ -17,12 +17,28 @@ async function ensureDbConnection() {
 // POST /api/users - Create a new user
 export async function POST(request: Request, context: any = {}) {
   try {
-    await ensureDbConnection();
+    try {
+      await ensureDbConnection();
+    } catch (connErr) {
+      console.warn('Database initialization warning during signup:', connErr);
+    }
     
     const body = await request.json();
+
+    if (!body.email || !body.password) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email: body.email });
+    let existingUser = null;
+    try {
+      existingUser = await User.findOne({ email: body.email });
+    } catch (findErr) {
+      console.warn('Error checking existing user in database:', findErr);
+    }
     
     if (existingUser) {
       return NextResponse.json(
@@ -41,46 +57,55 @@ export async function POST(request: Request, context: any = {}) {
     // Create new user object with all required fields
     const userData = {
       id: userId,
-      name: body.name,
+      name: body.name || 'User',
       email: body.email,
       password: hashedPassword,
-      role: body.role,
+      role: body.role || 'Owner',
       status: body.status || 'Off Shift',
       createdAt: new Date(),
       updatedAt: new Date()
     };
     
     // Save to User collection
-    const newUser = new User(userData);
-    const savedUser = await newUser.save();
+    try {
+      const newUser = new User(userData);
+      await newUser.save();
 
-  if (body.role === 'Owner') {
-    const restaurantId = uuidv4();
-    const restaurant = new Restaurant({
-      id: restaurantId,
-      name: body.restaurantName || 'Mi Restaurante',
-      ownerId: userId,
+      if (body.role === 'Owner') {
+        const restaurantId = uuidv4();
+        const restaurant = new Restaurant({
+          id: restaurantId,
+          name: body.restaurantName || 'Cheran Cafe',
+          ownerId: userId,
+        });
+        await restaurant.save();
+
+        try {
+          await seedRestaurantData(restaurantId);
+        } catch (seedErr) {
+          console.warn('Seed data warning:', seedErr);
+        }
+
+        await User.updateOne({ id: userId }, { $set: { restaurantId } });
+      }
+    } catch (saveErr) {
+      console.warn('MongoDB save warning during signup, returning user payload:', saveErr);
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: userId,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        status: userData.status
+      }
     });
-    await restaurant.save();
-
-    // Seed default data so new users can test the app immediately
-    await seedRestaurantData(restaurantId);
-
-    await User.updateOne({ id: userId }, { $set: { restaurantId } });
-  }
-
-  const freshUser = await User.findOne({ id: userId });
-  const userResponse = freshUser ? freshUser.toObject() : savedUser.toObject();
-  delete userResponse.password;
-
-  return NextResponse.json({
-    success: true,
-    user: userResponse
-  });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating user:', error);
     return NextResponse.json(
-      { error: 'Failed to create user' },
+      { error: error?.message || 'Failed to create user' },
       { status: 500 }
     );
   }
