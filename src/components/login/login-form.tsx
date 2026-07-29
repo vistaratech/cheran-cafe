@@ -77,23 +77,34 @@ export function LoginForm() {
 export function SignupForm() {
     const router = useRouter()
     const { t } = useI18nStore();
+    const { login } = useUserStore();
     const [name, setName] = useState("");
     const [restaurantName, setRestaurantName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
-            toast.error(t('userMenu.signup_error_title'), {
-                description: t('userMenu.passwords_do_not_match'),
+            toast.error("Passwords do not match", {
+                description: "Please check your passwords and try again.",
                 duration: 3000,
             });
             return;
         }
 
+        if (password.length < 4) {
+            toast.error("Password too short", {
+                description: "Password must be at least 4 characters long.",
+                duration: 3000,
+            });
+            return;
+        }
+
+        setLoading(true);
         try {
             const response = await fetch('/api/users', {
                 method: 'POST',
@@ -104,7 +115,7 @@ export function SignupForm() {
                     name,
                     email,
                     password,
-                    restaurantName: restaurantName || 'Mi Restaurante',
+                    restaurantName: restaurantName || 'Cheran Cafe',
                     role: "Owner",
                     status: "Off Shift"
                 }),
@@ -113,33 +124,46 @@ export function SignupForm() {
             const data = await response.json();
 
             if (response.ok) {
-                toast.success(t('userMenu.signup_success_title'), {
-                    description: t('userMenu.signup_success_desc'),
+                toast.success("Account created successfully!", {
+                    description: "Welcome to Cheran Cafe POS!",
                     duration: 3000,
                 });
-                router.push("/login");
+
+                // Auto login user after successful signup
+                const success = await login(email, password);
+                if (success) {
+                    clearSWRCache();
+                    setCookie("chefcito-auth", "true", 1);
+                    setTimeout(() => {
+                        router.push("/pos");
+                    }, 100);
+                } else {
+                    router.push("/login");
+                }
             } else {
-                toast.error(t('userMenu.signup_error_title'), {
-                    description: data.error || t('userMenu.signup_error_desc'),
+                toast.error("Signup Failed", {
+                    description: data.error || "Failed to create account. Please try again.",
                     duration: 3000,
                 });
             }
         } catch (error) {
-            toast.error(t('userMenu.signup_error_title'), {
-                description: t('userMenu.signup_error_desc'),
+            toast.error("Signup Error", {
+                description: "Network error occurred during signup. Please try again.",
                 duration: 3000,
             });
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="signup-name">{t('userMenu.name')}</Label>
+                <Label htmlFor="signup-name">{t('userMenu.name') || 'Full Name'}</Label>
                 <Input
                     id="signup-name"
                     type="text"
-                    placeholder={t('userMenu.enter_your_name')}
+                    placeholder="e.g. Vistara Tech"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -147,23 +171,23 @@ export function SignupForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="signup-restaurant-name">Nombre del Restaurante</Label>
+                <Label htmlFor="signup-restaurant-name">Restaurant Name</Label>
                 <Input
                     id="signup-restaurant-name"
                     type="text"
-                    placeholder="Ej: Mi Restaurante Sabroso"
+                    placeholder="e.g. Cheran Cafe"
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Opcional. Se usará "Mi Restaurante" si lo dejas vacío.</p>
+                <p className="text-xs text-muted-foreground">Optional. Defaults to "Cheran Cafe".</p>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="signup-email">{t('userMenu.email')}</Label>
+                <Label htmlFor="signup-email">{t('userMenu.email') || 'Email Address'}</Label>
                 <Input
                     id="signup-email"
                     type="email"
-                    placeholder="owner@restaurant.com"
+                    placeholder="info.vistaratech@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -171,7 +195,7 @@ export function SignupForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="signup-password">{t('userMenu.password')}</Label>
+                <Label htmlFor="signup-password">{t('userMenu.password') || 'Password'}</Label>
                 <Input
                     id="signup-password"
                     type="password"
@@ -182,7 +206,7 @@ export function SignupForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="signup-confirm-password">{t('userMenu.confirm_password')}</Label>
+                <Label htmlFor="signup-confirm-password">{t('userMenu.confirm_password') || 'Confirm Password'}</Label>
                 <Input
                     id="signup-confirm-password"
                     type="password"
@@ -192,8 +216,8 @@ export function SignupForm() {
                 />
             </div>
 
-            <Button type="submit" className="w-full !mt-6 bg-primary hover:bg-accent text-primary-foreground font-bold">
-                {t('userMenu.sign_up')}
+            <Button type="submit" disabled={loading} className="w-full !mt-6 bg-[#593722] hover:bg-[#593722]/90 text-white font-bold rounded-xl shadow-md">
+                {loading ? "Creating Account..." : (t('userMenu.sign_up') || 'Sign Up')}
             </Button>
         </form>
     )
