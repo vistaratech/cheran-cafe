@@ -75,16 +75,35 @@ export const seedDefaultUsers = async () => {
 export const initializeDatabase = async () => {
   if (mongoose.connection.readyState === 1) return;
 
-  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+  // If DATABASE_URL is set (Neon PostgreSQL), initialize Neon tables automatically
+  if (process.env.DATABASE_URL) {
+    try {
+      const { initNeonTables } = await import('@/lib/neon');
+      await initNeonTables();
+    } catch (e) {
+      console.warn('Neon tables init notice:', e);
+    }
+  }
+
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI && (process.env.VERCEL || process.env.DATABASE_URL)) {
+    // Running in Vercel or with Neon Postgres: skip Mongoose connection timeout
+    return;
+  }
 
   try {
+    const uri = MONGODB_URI || 'mongodb://localhost:27017';
     const options = process.env.MONGODB_DB ? { dbName: process.env.MONGODB_DB } : {};
-    await mongoose.connect(MONGODB_URI, {
+    await mongoose.connect(uri, {
       ...options,
       serverSelectionTimeoutMS: 2000
     });
     await seedDefaultUsers();
   } catch (error) {
+    if (process.env.VERCEL || process.env.DATABASE_URL) {
+      console.warn('MongoDB connection skipped on Vercel environment.');
+      return;
+    }
     console.warn('Primary MongoDB connection failed. Initializing MongoMemoryServer fallback...');
     try {
       if (!mongoMemoryInstance) {
@@ -92,11 +111,9 @@ export const initializeDatabase = async () => {
       }
       const uri = mongoMemoryInstance.getUri();
       await mongoose.connect(uri, { dbName: 'chefcito' });
-      console.log('Connected to MongoMemoryServer at:', uri);
       await seedDefaultUsers();
     } catch (fallbackError) {
       console.error('Failed to initialize database connection:', fallbackError);
-      throw fallbackError;
     }
   }
 };
@@ -294,10 +311,37 @@ export const deleteCategory = async (id: string, restaurantId: string) => {
 
 // Menu Items
 export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> => {
+  if (process.env.DATABASE_URL) {
+    try {
+      const { sql } = await import('@/lib/neon');
+      const items = await sql`SELECT * FROM menu_items ORDER BY category ASC, name ASC;`;
+      if (items && items.length > 0) {
+        return items.map((i: any) => ({
+          id: i.id,
+          name: i.name,
+          description: i.description || '',
+          price: parseFloat(i.price),
+          category: i.category,
+          available: i.available ?? true,
+          imageUrl: i.image_url || '/placeholder-menu-item.jpg',
+          sortIndex: 0,
+          createdAt: new Date(i.created_at || Date.now()),
+          updatedAt: new Date(i.created_at || Date.now())
+        }));
+      }
+    } catch (e) {
+      console.warn('Neon menu items query notice:', e);
+    }
+  }
+
   await initializeDatabase();
   const query = restaurantId ? { restaurantId } : {};
-  const menuItems = await MenuItemModel.find(query).maxTimeMS(10000);
-  return menuItems.map(item => item.toObject());
+  try {
+    const menuItems = await MenuItemModel.find(query).maxTimeMS(5000);
+    return menuItems.map(item => item.toObject());
+  } catch (e) {
+    return [];
+  }
 };
 
 export const addMenuItem = async (itemData: Omit<MenuItem, 'id'> & { restaurantId: string }) => {

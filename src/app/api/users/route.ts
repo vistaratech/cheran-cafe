@@ -66,6 +66,24 @@ export async function POST(request: Request, context: any = {}) {
       updatedAt: new Date()
     };
     
+    // Save to Neon PostgreSQL database if DATABASE_URL is set
+    if (process.env.DATABASE_URL) {
+      try {
+        const { sql } = await import('@/lib/neon');
+        await sql`
+          INSERT INTO users (id, name, email, password, role)
+          VALUES (${userId}, ${userData.name}, ${userData.email}, ${hashedPassword}, ${userData.role})
+          ON CONFLICT (email) DO UPDATE SET
+            name = ${userData.name},
+            password = ${hashedPassword},
+            role = ${userData.role};
+        `;
+        console.log('✅ User inserted into Neon PostgreSQL:', userData.email);
+      } catch (neonErr) {
+        console.warn('Neon Postgres user insert notice:', neonErr);
+      }
+    }
+
     // Save to User collection
     try {
       const newUser = new User(userData);
