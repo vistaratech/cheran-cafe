@@ -39,6 +39,8 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
     return counts;
   }, [orderItems]);
 
+  const CATEGORY_ORDER = useMemo(() => ['Snacks', 'Hot', 'Falooda', 'Cheran Special'], []);
+
   const renderedCategories = useMemo(() => {
     const categoryMap = new Map(categories.map(c => [c.id, {...c, children: [] as Category[]}]));
     const roots: Category[] = [];
@@ -55,12 +57,20 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
     const traverse = (category: Category, depth: number) => {
         flattened.push({ ...category, depth });
         const children = (categoryMap.get(category.id) as any)?.children || [];
-        children.sort((a: Category,b: Category) => a.name.localeCompare(b.name)).forEach((child: Category) => traverse(child, depth + 1));
+        children.sort((a: Category, b: Category) => a.name.localeCompare(b.name)).forEach((child: Category) => traverse(child, depth + 1));
     };
 
-    roots.sort((a,b) => a.name.localeCompare(b.name)).forEach(root => traverse(root, 0));
+    roots.sort((a, b) => {
+      const idxA = CATEGORY_ORDER.indexOf(a.name);
+      const idxB = CATEGORY_ORDER.indexOf(b.name);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    }).forEach(root => traverse(root, 0));
+
     return flattened;
-  }, [categories]);
+  }, [categories, CATEGORY_ORDER]);
 
   const [activeCategoryName, setActiveCategoryName] = useState<string>(() => {
     // Try to get the last selected category from localStorage
@@ -126,15 +136,23 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
   }, [categoryMap, categoryChildrenMap]);
 
   const itemsForActiveCategory = useMemo(() => {
-    if (activeCategoryName === 'all') return menuItems;
-    
-    const activeCategory = categories.find(c => c.name === activeCategoryName);
-    if (!activeCategory) return [];
+    let filtered = menuItems;
+    if (activeCategoryName !== 'all') {
+      const activeCategory = categories.find(c => c.name === activeCategoryName);
+      if (!activeCategory) return [];
+      const relevantCategoryNames = getDescendantCategoryNames(activeCategory.id);
+      filtered = menuItems.filter(item => relevantCategoryNames.includes(item.category));
+    }
 
-    const relevantCategoryNames = getDescendantCategoryNames(activeCategory.id);
-    
-    return menuItems.filter(item => relevantCategoryNames.includes(item.category));
-  }, [activeCategoryName, menuItems, categories, getDescendantCategoryNames]);
+    return [...filtered].sort((a, b) => {
+      const catA = CATEGORY_ORDER.indexOf(a.category);
+      const catB = CATEGORY_ORDER.indexOf(b.category);
+      if (catA !== catB) {
+        return (catA === -1 ? 99 : catA) - (catB === -1 ? 99 : catB);
+      }
+      return (a.sortIndex ?? 0) - (b.sortIndex ?? 0) || a.name.localeCompare(b.name);
+    });
+  }, [activeCategoryName, menuItems, categories, getDescendantCategoryNames, CATEGORY_ORDER]);
   
   // New function to directly add item to cart without opening dialog
   const handleItemClick = (item: MenuItem) => {
