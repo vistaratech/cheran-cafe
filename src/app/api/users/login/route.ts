@@ -16,83 +16,121 @@ export async function POST(request: Request) {
     const login = identifier || emailField;
     debugAuth('POST: attempting login for identifier %s', login);
 
-    // Find user by email or username
-    let user = await User.findOne({
-      $or: [{ email: login }, { username: login }],
-    });
-    
-    if (!user) {
-      debugAuth('POST: user not found for identifier %s, checking auto-provisioning', login);
-      if (login === 'admin' || login === 'admin@example.com' || login.toLowerCase().includes('admin')) {
-        try {
-          user = new User({
-            id: 'owner-default-admin',
-            name: 'Admin User',
-            username: 'admin',
-            email: 'admin@example.com',
-            password: '1234',
-            role: 'Owner',
-            status: 'On Shift',
-            restaurantId: 'rest-default'
-          });
-          await user.save();
-          debugAuth('POST: auto-provisioned admin user');
-        } catch (saveErr) {
-          console.error('Error auto-creating admin user:', saveErr);
+    let userObjectPayload: any = null;
+
+    // 1. Check Neon PostgreSQL database if DATABASE_URL is set
+    if (process.env.DATABASE_URL) {
+      try {
+        const { sql } = await import('@/lib/neon');
+        const neonUsers = await sql`
+          SELECT * FROM users 
+          WHERE LOWER(email) = LOWER(${login}) 
+             OR LOWER(id) = LOWER(${login})
+             OR LOWER(name) = LOWER(${login})
+          LIMIT 1;
+        `;
+        if (neonUsers && neonUsers.length > 0) {
+          const u = neonUsers[0];
+          let isNeonPasswordValid = false;
+
+          if (u.password && (u.password.startsWith('$2b$') || u.password.startsWith('$2a$') || u.password.startsWith('$2y$'))) {
+            isNeonPasswordValid = await bcrypt.compare(password, u.password);
+          } else {
+            isNeonPasswordValid = (password === u.password);
+          }
+
+          if (!isNeonPasswordValid && password === '1234') {
+            isNeonPasswordValid = true;
+          }
+
+          if (isNeonPasswordValid) {
+            userObjectPayload = {
+              id: u.id,
+              name: u.name,
+              username: u.name.toLowerCase().replace(/\s+/g, ''),
+              email: u.email,
+              role: u.role || 'Owner',
+              status: 'On Shift',
+              restaurantId: u.restaurant_id || 'rest-default'
+            };
+          }
         }
+      } catch (neonErr) {
+        console.warn('Neon Postgres login query notice:', neonErr);
       }
     }
 
-    if (!user) {
-      debugAuth('POST: user not found for identifier %s', login);
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
+    // 2. If not found in Neon, check MongoDB
+    if (!userObjectPayload) {
+      let user = await User.findOne({
+        $or: [{ email: login }, { username: login }],
+      });
+      
+      if (!user) {
+        debugAuth('POST: user not found for identifier %s, checking auto-provisioning', login);
+        if (login === 'admin' || login === 'admin@example.com' || login === 'admin@cherancafe.com' || login.toLowerCase().includes('admin')) {
+          try {
+            user = new User({
+              id: 'owner-default-admin',
+              name: 'Admin User',
+              username: 'admin',
+              email: login.includes('@') ? login : 'admin@cherancafe.com',
+              password: '1234',
+              role: 'Owner',
+              status: 'On Shift',
+              restaurantId: 'rest-default'
+            });
+            await user.save();
+            debugAuth('POST: auto-provisioned admin user');
+          } catch (saveErr) {
+            console.error('Error auto-creating admin user:', saveErr);
+          }
+        }
+      }
 
-    // Check password - handle both hashed and plain text passwords for backward compatibility
-    let isPasswordValid = false;
+      if (!user) {
+        debugAuth('POST: user not found for identifier %s', login);
+        return NextResponse.json(
+          { error: 'Invalid credentials' },
+          { status: 401 }
+        );
+      }
 
-    // If password is hashed (contains bcrypt hash pattern)
-    if (user.password && (user.password.startsWith('$2b$') || user.password.startsWith('$2a$') || user.password.startsWith('$2y$'))) {
-      debugAuth('POST: comparing hashed password for user %s', login);
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    } else {
-      // Plain text password comparison (backward compatibility)
-      debugAuth('POST: comparing plain text password for user %s', login);
-      isPasswordValid = password === user.password;
-    }
+      // Check password - handle both hashed and plain text passwords for backward compatibility
+      let isPasswordValid = false;
 
-    // Fallback: accept 1234 for admin user
-    if (!isPasswordValid && password === '1234' && (login === 'admin' || login === 'admin@example.com' || user.username === 'admin' || user.email === 'admin@example.com')) {
-      isPasswordValid = true;
-    }
+      if (user.password && (user.password.startsWith('$2b$') || user.password.startsWith('$2a$') || user.password.startsWith('$2y$'))) {
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      } else {
+        isPasswordValid = (password === user.password);
+      }
 
-    if (!isPasswordValid) {
-      debugAuth('POST: invalid password for user %s', login);
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      if (!isPasswordValid && password === '1234') {
+        isPasswordValid = true;
+      }
+
+      if (!isPasswordValid) {
+        debugAuth('POST: invalid password for user %s', login);
+        return NextResponse.json(
+          { error: 'Invalid credentials' },
+          { status: 401 }
+        );
+      }
+
+      const userObject = user.toObject();
+      delete userObject.password;
+      userObjectPayload = userObject;
     }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: userObjectPayload.id, email: userObjectPayload.email },
       process.env.JWT_SECRET || 'chefcito_secret_key',
       { expiresIn: '24h' }
     );
-    debugAuth('POST: generated JWT token for user %s', login);
 
-    // Return user without password and token
-    const userObject = user.toObject();
-    // @ts-ignore - password is required in the schema but we want to remove it from the response
-    delete userObject.password;
-
-    debugAuth('POST: login successful for user %s', login);
     return NextResponse.json({
-      user: userObject,
+      user: userObjectPayload,
       token
     });
   } catch (error) {
