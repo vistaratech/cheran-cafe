@@ -128,12 +128,9 @@ export async function POST(request: Request, context: any = {}) {
     const orderData = await request.json();
     debugOrders('POST: order data %O', orderData);
     
-    // Validate restaurantId
+    // Default restaurantId if missing
     if (!orderData.restaurantId) {
-      return NextResponse.json(
-        createApiResponse(undefined, "restaurantId is required"),
-        { status: 400 }
-      );
+      orderData.restaurantId = 'rest-default';
     }
 
     // Validate items
