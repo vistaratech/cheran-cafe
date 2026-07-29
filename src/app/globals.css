@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* 2026 Modern UAE Luxury Micro-Animations & Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #D4AF37 0%, #C5A059 50%, #B8860B 100%);
+  }
+
+  .gold-text-gradient {
+    background: linear-gradient(135deg, #5C3A21 0%, #B8860B 60%, #8B5A2B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    box-shadow: 0 10px 30px -10px rgba(92, 58, 33, 0.08);
+  }
+
+  .glass-header {
+    background: rgba(253, 251, 247, 0.88);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(197, 160, 89, 0.25);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes fadeInUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(16px);
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  :root {
+    /* 2026 Modern UAE Luxury Coffee & Gold Palette */
+    --background: 36 33% 97%;          /* Rich Warm Desert Sand #FAF6F0 */
+    --foreground: 24 45% 15%;          /* Deep Royal Espresso #362217 */
+    
+    --card: 0 0% 100%;                 /* Pure Ivory White #FFFFFF */
+    --card-foreground: 24 45% 15%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 45% 15%;
+    
+    --primary: 24 45% 24%;             /* UAE Imperial Espresso #593722 */
+    --primary-foreground: 40 40% 98%;   /* Soft Warm Ivory */
+    
+    --secondary: 36 40% 92%;           /* Warm Sand Beige #F4EDE2 */
+    --secondary-foreground: 24 45% 24%;
+    
+    --muted: 36 30% 94%;               /* Muted Cream Tint #F7F2EA */
+    --muted-foreground: 24 20% 45%;    /* Soft Muted Espresso Gray #7D6B5E */
+    
+    --accent: 40 62% 48%;              /* Desert Gold Accent #D4AF37 */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 36 28% 86%;              /* Soft Gold-tinted Border #E7DDD0 */
+    --input: 36 28% 86%;
+    --ring: 24 45% 24%;
+    
+    --radius: 0.85rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(197, 160, 89, 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(197, 160, 89, 0.6);
+  }
+
+  .font-size-small { font-size: 16px; }
+  .font-size-medium { font-size: 18px; }
+  .font-size-large { font-size: 20px; }
+
+  .font-size-small .text-base { font-size: 16px; }
+  .font-size-medium .text-base { font-size: 18px; }
+  .font-size-large .text-base { font-size: 20px; }
+
+  .font-size-small .text-sm { font-size: 14px; }
+  .font-size-medium .text-sm { font-size: 16px; }
+  .font-size-large .text-sm { font-size: 18px; }
+
+  .font-size-small .text-xs { font-size: 12px; }
+  .font-size-medium .text-xs { font-size: 14px; }
+  .font-size-large .text-xs { font-size: 16px; }
+
+  .font-size-small .text-lg { font-size: 20px; }
+  .font-size-medium .text-lg { font-size: 22px; }
+  .font-size-large .text-lg { font-size: 24px; }
+
+  .font-size-small .text-xl { font-size: 22px; }
+  .font-size-medium .text-xl { font-size: 24px; }
+  .font-size-large .text-xl { font-size: 28px; }
+
+  .font-size-small .text-2xl { font-size: 26px; }
+  .font-size-medium .text-2xl { font-size: 30px; }
+  .font-size-large .text-2xl { font-size: 34px; }
+}
+
+@layer utilities {
+  .animate-blink {
+    animation: blink 1.5s infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
