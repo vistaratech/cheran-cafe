@@ -56,9 +56,11 @@ export default function KdsPage() {
     getStackedItemsForWorkstation
   } = kdsStore;
 
+  const restId = user?.restaurantId || 'rest-default';
+
   // Using SWR with optimized configuration for faster loading
   const { data: ordersData = [], error, isLoading: loading, mutate } = useSWR<Order[]>(
-    user?.restaurantId ? `/api/orders?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
+    `/api/orders?restaurantId=${encodeURIComponent(restId)}`,
     fetcher, {
     fallbackData: [],
     revalidateOnMount: true,
@@ -73,7 +75,7 @@ export default function KdsPage() {
 
   // Fetch workstations with optimized configuration
   const { data: workstationsData = [], isLoading: workstationsLoading } = useSWR<IWorkstation[]>(
-    user?.restaurantId ? `/api/workstations?restaurantId=${encodeURIComponent(user.restaurantId)}` : null,
+    `/api/workstations?restaurantId=${encodeURIComponent(restId)}`,
     fetcher, {
     fallbackData: [],
     revalidateOnMount: true,

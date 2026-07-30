@@ -5,19 +5,7 @@ import { type Category } from '@/lib/types';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const restaurantId = searchParams.get('restaurantId');
-    
-    if (!restaurantId) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: [],
-          error: 'restaurantId is required',
-          message: 'restaurantId query parameter is required'
-        },
-        { status: 400 }
-      );
-    }
+    const restaurantId = searchParams.get('restaurantId') || 'rest-default';
     
     const categories = await getCategories(restaurantId);
     return NextResponse.json({

@@ -810,7 +810,7 @@ export default function RestaurantPage() {
   
   // Fetch initial data - avoid store objects in dependencies to prevent infinite loops
   useEffect(() => {
-    const restaurantId = currentUser?.restaurantId;
+    const restaurantId = currentUser?.restaurantId || 'rest-default';
     fetchMenuData(restaurantId);
     fetchInventoryItems(restaurantId);
     fetchPaymentMethods(restaurantId);
