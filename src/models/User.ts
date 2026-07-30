@@ -38,6 +38,10 @@ const UserSchema: Schema = new Schema({
   timestamps: true // This will automatically manage createdAt and updatedAt
 });
 
+UserSchema.index({ restaurantId: 1, email: 1 });
+UserSchema.index({ restaurantId: 1, username: 1 });
+UserSchema.index({ restaurantId: 1, role: 1 });
+
 UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(10);

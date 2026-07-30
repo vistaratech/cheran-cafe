@@ -17,6 +17,8 @@ const CategorySchema: Schema = new Schema({
   isModifierGroup: { type: Boolean, default: false }
 });
 
+CategorySchema.index({ restaurantId: 1, parentId: 1 });
+
 // Prevent model recompilation in development mode
 const Category = mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema, 'categories');
 export default Category;

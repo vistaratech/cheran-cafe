@@ -28,6 +28,10 @@ const MenuItemSchema: Schema = new Schema({
   sortIndex: { type: Number, default: 0 }
 });
 
+MenuItemSchema.index({ restaurantId: 1, category: 1 });
+MenuItemSchema.index({ restaurantId: 1, available: 1 });
+MenuItemSchema.index({ restaurantId: 1, id: 1 });
+
 // Prevent model recompilation in development mode
 const MenuItem = mongoose.models.MenuItem || mongoose.model<IMenuItem>('MenuItem', MenuItemSchema, 'menuitems');
 export default MenuItem;

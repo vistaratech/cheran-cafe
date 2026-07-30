@@ -6,12 +6,11 @@ import Role from '../../../../models/Role';
 import mongoose from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 
+import { initializeDatabase } from '@/lib/database-service';
+
 // Helper function to ensure database connection
 async function ensureDbConnection() {
-  if (mongoose.connection.readyState !== 1) {
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    await mongoose.connect(MONGODB_URI);
-  }
+  await initializeDatabase();
 }
 
 // GET /api/users/[id] - Get specific user

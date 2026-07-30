@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  compress: true,
   headers: async () => [
     {
       source: '/(.*)',
@@ -10,6 +11,15 @@ const nextConfig: NextConfig = {
           value: 'origin'
         }
       ],
+    },
+    {
+      source: '/_next/static/(.*)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable'
+        }
+      ]
     }
   ],
   /* config options here */
@@ -36,4 +46,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;;
+export default nextConfig;

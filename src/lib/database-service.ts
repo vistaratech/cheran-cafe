@@ -71,6 +71,12 @@ export const seedDefaultUsers = async () => {
   }
 };
 
+declare global {
+  var _mongoosePromise: Promise<typeof mongoose> | undefined;
+}
+
+let cachedMenuItemsForInflation: { data: MenuItem[]; timestamp: number; key?: string } | null = null;
+
 // Initialize database connection
 export const initializeDatabase = async () => {
   if (mongoose.connection.readyState === 1) return;
@@ -92,14 +98,22 @@ export const initializeDatabase = async () => {
   }
 
   try {
-    const uri = MONGODB_URI || 'mongodb://localhost:27017';
-    const options = process.env.MONGODB_DB ? { dbName: process.env.MONGODB_DB } : {};
-    await mongoose.connect(uri, {
-      ...options,
-      serverSelectionTimeoutMS: 2000
-    });
-    await seedDefaultUsers();
+    if (!global._mongoosePromise) {
+      const uri = MONGODB_URI || 'mongodb://localhost:27017';
+      const options = process.env.MONGODB_DB ? { dbName: process.env.MONGODB_DB } : {};
+      global._mongoosePromise = mongoose.connect(uri, {
+        ...options,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 20,
+        minPoolSize: 2
+      }).then(m => {
+        seedDefaultUsers().catch(console.error);
+        return m;
+      });
+    }
+    await global._mongoosePromise;
   } catch (error) {
+    global._mongoosePromise = undefined;
     if (process.env.VERCEL || process.env.DATABASE_URL) {
       console.warn('MongoDB connection skipped on Vercel environment.');
       return;
@@ -118,12 +132,18 @@ export const initializeDatabase = async () => {
   }
 };
 
-// Helper function to get all menu items for order inflation
+// Helper function to get all menu items for order inflation with caching
 const getAllMenuItems = async (restaurantId?: string) => {
+  const now = Date.now();
+  const cacheKey = restaurantId || 'all';
+  if (cachedMenuItemsForInflation && cachedMenuItemsForInflation.key === cacheKey && (now - cachedMenuItemsForInflation.timestamp < 15000)) {
+    return cachedMenuItemsForInflation.data;
+  }
   await initializeDatabase();
   const query = restaurantId ? { restaurantId } : {};
-  const menuItems = await MenuItemModel.find(query);
-  return menuItems.map(item => item.toObject());
+  const menuItems = await MenuItemModel.find(query).lean().maxTimeMS(5000);
+  cachedMenuItemsForInflation = { data: menuItems as unknown as MenuItem[], timestamp: now, key: cacheKey };
+  return cachedMenuItemsForInflation.data;
 };
 
 const inflateOrder = async (order: any, allMenuItems: MenuItem[], allWorkstations: any[]): Promise<Order> => {
@@ -199,8 +219,8 @@ const inflateOrder = async (order: any, allMenuItems: MenuItem[], allWorkstation
 export const getUsers = async (restaurantId?: string) => {
   await initializeDatabase();
   const query = restaurantId ? { restaurantId } : {};
-  const users = await UserModel.find(query).maxTimeMS(10000);
-  return users.map(user => user.toObject());
+  const users = await UserModel.find(query).lean().maxTimeMS(5000);
+  return users as any[];
 };
 
 export const getUserPerformance = async (dateRange?: DateRange, restaurantId?: string) => {
@@ -236,8 +256,8 @@ export const getUserPerformance = async (dateRange?: DateRange, restaurantId?: s
 export const getCustomers = async (restaurantId?: string): Promise<Customer[]> => {
   await initializeDatabase();
   const query = restaurantId ? { restaurantId } : {};
-  const customers = await CustomerModel.find(query).maxTimeMS(10000);
-  return customers.map(customer => customer.toObject());
+  const customers = await CustomerModel.find(query).lean().maxTimeMS(5000);
+  return customers as any[];
 };
 
 export const addCustomer = async (customerData: Omit<Customer, 'id'>) => {
@@ -394,9 +414,9 @@ export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> =
   try {
     await initializeDatabase();
     const query = restaurantId ? { restaurantId } : {};
-    const menuItems = await MenuItemModel.find(query).maxTimeMS(3000);
+    const menuItems = await MenuItemModel.find(query).lean().maxTimeMS(3000);
     if (menuItems && menuItems.length > 0) {
-      cachedMenuItems = menuItems.map(item => item.toObject());
+      cachedMenuItems = menuItems as any[];
       lastMenuItemsFetchTime = now;
       return cachedMenuItems;
     }
@@ -428,8 +448,8 @@ export const updateMenuItem = async (id: string, itemData: Partial<MenuItem>) =>
   );
 
   if (result.modifiedCount > 0) {
-    const updatedItem = await MenuItemModel.findOne({ id });
-    return updatedItem ? updatedItem.toObject() : null;
+    const updatedItem = await MenuItemModel.findOne({ id }).lean();
+    return updatedItem ? (updatedItem as any) : null;
   }
 
   return null;
@@ -448,11 +468,11 @@ export const getInitialOrders = async (restaurantId?: string): Promise<Order[]> 
   const query = restaurantId ? { restaurantId } : {};
   const wsQuery = restaurantId ? { restaurantId } : {};
   const [orders, menuItems, workstations] = await Promise.all([
-    OrderModel.find(query).sort({ position: 1, createdAt: -1 }).maxTimeMS(5000),
+    OrderModel.find(query).lean().sort({ position: 1, createdAt: -1 }).maxTimeMS(5000),
     getAllMenuItems(restaurantId),
-    WorkstationModel.find(wsQuery).sort({ position: 1 }),
+    WorkstationModel.find(wsQuery).lean().sort({ position: 1 }),
   ]);
-  return Promise.all(orders.map(order => inflateOrder(order.toObject(), menuItems, workstations)));
+  return Promise.all(orders.map(order => inflateOrder(order, menuItems, workstations)));
 };
 
 export const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>) => {
@@ -1112,8 +1132,8 @@ export const getKitchenReport = async (dateRange: DateRange, restaurantId?: stri
 export const getWorkstations = async (restaurantId?: string): Promise<Workstation[]> => {
   await initializeDatabase();
   const query = restaurantId ? { restaurantId } : {};
-  const workstations = await WorkstationModel.find(query).sort({ position: 1 }).maxTimeMS(10000);
-  return workstations.map(workstation => workstation.toObject());
+  const workstations = await WorkstationModel.find(query).lean().sort({ position: 1 }).maxTimeMS(5000);
+  return workstations as any[];
 };
 
 export const addWorkstation = async (workstationData: Omit<Workstation, 'id'>) => {

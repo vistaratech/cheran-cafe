@@ -3,21 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import Role from '../../../models/Role';
 import User from '../../../models/User';
-import mongoose from 'mongoose';
-
-// Helper function to ensure database connection
-async function ensureDbConnection() {
-  if (mongoose.connection.readyState !== 1) {
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    await mongoose.connect(MONGODB_URI);
-  }
-}
+import { initializeDatabase } from '@/lib/database-service';
 
 // GET /api/roles - Get all roles for a restaurant
 export async function GET(request: Request) {
   try {
     try {
-      await ensureDbConnection();
+      await initializeDatabase();
     } catch (connErr) {
       console.warn('Roles db connection notice:', connErr);
     }
@@ -25,9 +17,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get('restaurantId') || 'rest-default';
 
-    let roles = [];
+    let roles: any[] = [];
     try {
-      roles = await Role.find({ restaurantId }).maxTimeMS(3000);
+      roles = await Role.find({ restaurantId }).lean().maxTimeMS(3000);
     } catch (dbErr) {
       console.warn('Roles query notice:', dbErr);
     }
@@ -57,7 +49,7 @@ export async function GET(request: Request) {
 // POST /api/roles - Create a new role
 export async function POST(request: Request) {
   try {
-    await ensureDbConnection();
+    await initializeDatabase();
     
     const body = await request.json();
 
@@ -117,7 +109,7 @@ export async function POST(request: Request) {
 // PUT /api/roles/[id] - Update a role
 export async function PUT(request: Request) {
   try {
-    await ensureDbConnection();
+    await initializeDatabase();
     
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
@@ -174,7 +166,7 @@ export async function PUT(request: Request) {
 // DELETE /api/roles/[id] - Delete a role
 export async function DELETE(request: Request) {
   try {
-    await ensureDbConnection();
+    await initializeDatabase();
     
     const url = new URL(request.url);
     const id = url.searchParams.get('id');

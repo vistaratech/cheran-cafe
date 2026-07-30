@@ -47,38 +47,26 @@ class DatabaseManager {
       return this.clientPromise;
     }
 
-    console.log('Creating new MongoDB client with URI:', MONGODB_URI);
-    
-    // In development, store the promise in a global variable to avoid multiple connections
-    if (process.env.NODE_ENV === 'development') {
-      if (!global._mongoClientPromise) {
-        this.client = new MongoClient(MONGODB_URI, {
-          serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 5s
-          socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-          maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-          connectTimeoutMS: 10000, // Connection timeout 10s
-          retryWrites: true,
-          retryReads: true
-        });
-        global._mongoClientPromise = this.client.connect();
-      }
-      this.clientPromise = global._mongoClientPromise;
-    } else {
-      // In production, create a new connection
+    // Store the promise in a global variable to reuse the connection pool across invocations
+    if (!global._mongoClientPromise) {
       this.client = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 5s
-        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-        connectTimeoutMS: 10000, // Connection timeout 10s
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        maxIdleTimeMS: 30000,
+        connectTimeoutMS: 5000,
+        maxPoolSize: 20,
+        minPoolSize: 2,
         retryWrites: true,
         retryReads: true
       });
-      this.clientPromise = this.client.connect();
+      global._mongoClientPromise = this.client.connect();
     }
+    this.clientPromise = global._mongoClientPromise;
 
     // Add connection error handling
     this.clientPromise.catch(err => {
       console.error('MongoDB connection error:', err);
+      global._mongoClientPromise = undefined;
     });
 
     return this.clientPromise;

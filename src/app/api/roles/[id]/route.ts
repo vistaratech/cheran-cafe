@@ -3,11 +3,10 @@ import Role from '../../../../models/Role';
 import User from '../../../../models/User';
 import mongoose from 'mongoose';
 
+import { initializeDatabase } from '@/lib/database-service';
+
 async function ensureDbConnection() {
-  if (mongoose.connection.readyState !== 1) {
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    await mongoose.connect(MONGODB_URI);
-  }
+  await initializeDatabase();
 }
 
 // PUT /api/roles/[id] - Update a role

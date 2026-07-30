@@ -51,6 +51,9 @@ const OrderSchema: Schema = new Schema({
 });
 
 // Add indexes for better query performance
+OrderSchema.index({ restaurantId: 1, status: 1, createdAt: -1 });
+OrderSchema.index({ restaurantId: 1, position: 1, createdAt: -1 });
+OrderSchema.index({ restaurantId: 1, id: 1 });
 OrderSchema.index({ restaurantId: 1, createdAt: -1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ status: 1 });
