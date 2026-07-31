@@ -86,7 +86,7 @@ function PosPageContent() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(true);
   const [isSendingToKitchen, setIsSendingToKitchen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isEditingOrder, setIsEditingOrder] = useState<Order | null>(null);
@@ -674,23 +674,47 @@ function PosPageContent() {
         order={selectedOrder}
       />
         
-      <div className="flex flex-1 flex-col gap-4 p-1 md:p-1 overflow-hidden md:pt-1 pt-1">
-        {/* Order History Button */}
-        <div className="flex justify-end">
-          <Button 
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm" 
-            onClick={() => { 
-              console.log('Navigating to orders page');
-              router.push('/orders');
-            }}
-          >
-            <History className="h-5 w-5" />
-            <span className="ml-2">Orders</span>
-          </Button>
+      <div className="flex flex-1 flex-col gap-3 p-2 md:p-3 overflow-hidden h-[calc(100vh-4rem)]">
+        {/* Top Control Bar */}
+        <div className="flex items-center justify-between gap-3 bg-white/80 backdrop-blur-md p-2 px-3 rounded-2xl border border-amber-900/10 shadow-xs flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="px-3 py-1.5 rounded-xl border-amber-900/20 bg-amber-900/5 text-[#593722] font-semibold text-xs flex items-center gap-1.5">
+              <ChefHat className="h-4 w-4" />
+              <span>POS Terminal</span>
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              size="sm"
+              className="rounded-xl border-amber-900/20 hover:bg-amber-900/5 text-[#593722] font-semibold text-xs shadow-xs" 
+              onClick={() => { 
+                router.push('/orders');
+              }}
+            >
+              <History className="h-4 w-4 mr-1.5" />
+              <span>Order History</span>
+            </Button>
+            
+            <Button
+              variant={isCartOpen ? "default" : "outline"}
+              size="sm"
+              className={`rounded-xl text-xs font-semibold shadow-xs ${
+                isCartOpen 
+                  ? 'bg-[#593722] hover:bg-[#4a2e1c] text-white' 
+                  : 'border-amber-900/20 hover:bg-amber-900/5 text-[#593722]'
+              }`}
+              onClick={() => setIsCartOpen(!isCartOpen)}
+            >
+              <ShoppingCart className="h-4 w-4 mr-1.5" />
+              <span>Cart ({currentOrderItems.length})</span>
+            </Button>
+          </div>
         </div>
         
-        {/* Menu Items Section */}
-        <div className="flex flex-1 overflow-hidden">
+        {/* Menu Items & Cart Side-by-Side */}
+        <div className="flex flex-1 overflow-hidden gap-3">
           <div className="flex-1 overflow-hidden">
             <MenuSelection 
               menuItems={displayItems}
@@ -699,9 +723,9 @@ function PosPageContent() {
             />
           </div>
           
-          {/* Persistent Cart Column - Made wider for better visibility on all screens */}
-          <div className={`flex flex-col h-full transition-all duration-300 ${isCartOpen ? 'w-full md:w-96 lg:w-[32rem] ml-1' : 'w-0 opacity-0'}`}>
-            <div className={`flex-1 ${isCartOpen ? 'block' : 'hidden'}`}>
+          {/* Cart Column */}
+          <div className={`flex flex-col h-full transition-all duration-300 ${isCartOpen ? 'w-full md:w-96 lg:w-[26rem] xl:w-[28rem]' : 'w-0 hidden'}`}>
+            <div className="flex-1 h-full">
               <SheetCart 
                 open={true}
                 onOpenChange={setIsCartOpen}
@@ -713,24 +737,6 @@ function PosPageContent() {
             </div>
           </div>
         </div>
-        
-        {/* Cart Toggle Button - Only show when cart is hidden */}
-        {!isCartOpen && (
-          <div className="fixed bottom-20 right-6 z-20">
-            <Button 
-              size="icon" 
-              className="rounded-full shadow-xl h-14 w-14 bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-primary-foreground/20"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {currentOrderItems.length > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0 text-xs rounded-full bg-accent text-accent-foreground font-bold border border-background">
-                  {currentOrderItems.length}
-                </Badge>
-              )}
-            </Button>
-          </div>
-        )}
       </div>
     </>
   );
