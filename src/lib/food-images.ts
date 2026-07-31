@@ -21,17 +21,17 @@ export const FOOD_IMAGE_MAP: Record<string, string> = {
   // Falooda & Desserts
   'Normal Falooda': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
   'Mango Falooda': 'https://images.unsplash.com/photo-1553787499-6f9133860278?w=500&auto=format&fit=crop&q=80',
-  'Dry Fruit Falooda': 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=80',
-  'Rose Falooda': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-  'Rose Malai Falooda': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-  'Special Cheran Falooda': 'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&auto=format&fit=crop&q=80',
-  'Special Falooda': 'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&auto=format&fit=crop&q=80',
-  'Avil Milk': 'https://images.unsplash.com/photo-1579954115545-aad505958169?w=500&auto=format&fit=crop&q=80',
-  'SP Avil Milk': 'https://images.unsplash.com/photo-1579954115545-aad505958169?w=500&auto=format&fit=crop&q=80',
+  'Dry Fruit Falooda': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=500&auto=format&fit=crop&q=80',
+  'Rose Falooda': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=80',
+  'Rose Malai Falooda': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=80',
+  'Special Cheran Falooda': 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=80',
+  'Special Falooda': 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=80',
+  'Avil Milk': 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500&auto=format&fit=crop&q=80',
+  'SP Avil Milk': 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500&auto=format&fit=crop&q=80',
 
   // Cheran Special
   'Cocktail Shake': 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=80',
-  'Royal Falooda': 'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&auto=format&fit=crop&q=80',
+  'Royal Falooda': 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=80',
   'Fruit Salad with Ice Cream': 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=80',
   'Sizzling Brownie': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop&q=80',
   'Choco Lava Cake': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop&q=80',
@@ -46,7 +46,12 @@ export const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
 };
 
 export function getFoodImageUrl(name: string, category?: string, currentImageUrl?: string): string {
-  // If currentImageUrl exists and is a real image URL (not placeholder/empty), use it
+  // Always check direct item name match first for known items
+  if (FOOD_IMAGE_MAP[name]) {
+    return FOOD_IMAGE_MAP[name];
+  }
+
+  // If currentImageUrl exists and is a valid external image URL, use it
   if (
     currentImageUrl &&
     currentImageUrl.trim() !== '' &&
@@ -54,11 +59,6 @@ export function getFoodImageUrl(name: string, category?: string, currentImageUrl
     !currentImageUrl.startsWith('https://placehold.co')
   ) {
     return currentImageUrl;
-  }
-
-  // Check direct item name match
-  if (FOOD_IMAGE_MAP[name]) {
-    return FOOD_IMAGE_MAP[name];
   }
 
   // Case insensitive fuzzy match
