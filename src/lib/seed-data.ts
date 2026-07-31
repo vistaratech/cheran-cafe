@@ -36,6 +36,8 @@ async function seedCategories(restaurantId: string, force: boolean = false) {
   log('Seeded %d categories for %s', categories.length, restaurantId);
 }
 
+import { getFoodImageUrl } from '@/lib/food-images';
+
 async function seedMenuItems(restaurantId: string, force: boolean = false) {
   if (force) {
     await MenuItemModel.deleteMany({ restaurantId });
@@ -47,39 +49,44 @@ async function seedMenuItems(restaurantId: string, force: boolean = false) {
     }
   }
 
-  const items = [
+  const rawItems = [
     // Snacks
-    { id: uuidv4(), restaurantId, name: 'Veg Puffs', price: 20, category: 'Snacks', imageUrl: '', sortIndex: 0, available: true },
-    { id: uuidv4(), restaurantId, name: 'Egg Puffs', price: 25, category: 'Snacks', imageUrl: '', sortIndex: 1, available: true },
-    { id: uuidv4(), restaurantId, name: 'Paneer Puffs', price: 25, category: 'Snacks', imageUrl: '', sortIndex: 2, available: true },
-    { id: uuidv4(), restaurantId, name: 'Chicken Puffs', price: 30, category: 'Snacks', imageUrl: '', sortIndex: 3, available: true },
-    { id: uuidv4(), restaurantId, name: 'Mushroom Puffs', price: 25, category: 'Snacks', imageUrl: '', sortIndex: 4, available: true },
-    { id: uuidv4(), restaurantId, name: 'Veg Roll', price: 30, category: 'Snacks', imageUrl: '', sortIndex: 5, available: true },
-    { id: uuidv4(), restaurantId, name: 'Egg Roll', price: 35, category: 'Snacks', imageUrl: '', sortIndex: 6, available: true },
-    { id: uuidv4(), restaurantId, name: 'Chicken Roll', price: 40, category: 'Snacks', imageUrl: '', sortIndex: 7, available: true },
+    { id: uuidv4(), restaurantId, name: 'Veg Puffs', price: 20, category: 'Snacks', sortIndex: 0, available: true },
+    { id: uuidv4(), restaurantId, name: 'Egg Puffs', price: 25, category: 'Snacks', sortIndex: 1, available: true },
+    { id: uuidv4(), restaurantId, name: 'Paneer Puffs', price: 25, category: 'Snacks', sortIndex: 2, available: true },
+    { id: uuidv4(), restaurantId, name: 'Chicken Puffs', price: 30, category: 'Snacks', sortIndex: 3, available: true },
+    { id: uuidv4(), restaurantId, name: 'Mushroom Puffs', price: 25, category: 'Snacks', sortIndex: 4, available: true },
+    { id: uuidv4(), restaurantId, name: 'Veg Roll', price: 30, category: 'Snacks', sortIndex: 5, available: true },
+    { id: uuidv4(), restaurantId, name: 'Egg Roll', price: 35, category: 'Snacks', sortIndex: 6, available: true },
+    { id: uuidv4(), restaurantId, name: 'Chicken Roll', price: 40, category: 'Snacks', sortIndex: 7, available: true },
 
     // Hot Beverages
-    { id: uuidv4(), restaurantId, name: 'Tea', price: 20, category: 'Hot', imageUrl: '', sortIndex: 0, available: true },
-    { id: uuidv4(), restaurantId, name: 'Lemon Tea', price: 20, category: 'Hot', imageUrl: '', sortIndex: 1, available: true },
-    { id: uuidv4(), restaurantId, name: 'Coffee', price: 25, category: 'Hot', imageUrl: '', sortIndex: 2, available: true },
-    { id: uuidv4(), restaurantId, name: 'Green Tea', price: 20, category: 'Hot', imageUrl: '', sortIndex: 3, available: true },
-    { id: uuidv4(), restaurantId, name: 'Badam', price: 25, category: 'Hot', imageUrl: '', sortIndex: 4, available: true },
-    { id: uuidv4(), restaurantId, name: 'Boost', price: 30, category: 'Hot', imageUrl: '', sortIndex: 5, available: true },
-    { id: uuidv4(), restaurantId, name: 'Horlicks', price: 30, category: 'Hot', imageUrl: '', sortIndex: 6, available: true },
+    { id: uuidv4(), restaurantId, name: 'Tea', price: 20, category: 'Hot', sortIndex: 0, available: true },
+    { id: uuidv4(), restaurantId, name: 'Lemon Tea', price: 20, category: 'Hot', sortIndex: 1, available: true },
+    { id: uuidv4(), restaurantId, name: 'Coffee', price: 25, category: 'Hot', sortIndex: 2, available: true },
+    { id: uuidv4(), restaurantId, name: 'Green Tea', price: 20, category: 'Hot', sortIndex: 3, available: true },
+    { id: uuidv4(), restaurantId, name: 'Badam', price: 25, category: 'Hot', sortIndex: 4, available: true },
+    { id: uuidv4(), restaurantId, name: 'Boost', price: 30, category: 'Hot', sortIndex: 5, available: true },
+    { id: uuidv4(), restaurantId, name: 'Horlicks', price: 30, category: 'Hot', sortIndex: 6, available: true },
 
     // Falooda
-    { id: uuidv4(), restaurantId, name: 'Normal Falooda', price: 119, category: 'Falooda', imageUrl: '', sortIndex: 0, available: true },
-    { id: uuidv4(), restaurantId, name: 'Mango Falooda', price: 119, category: 'Falooda', imageUrl: '', sortIndex: 1, available: true },
-    { id: uuidv4(), restaurantId, name: 'Dry Fruit Falooda', price: 139, category: 'Falooda', imageUrl: '', sortIndex: 2, available: true },
-    { id: uuidv4(), restaurantId, name: 'Rose Malai Falooda', price: 129, category: 'Falooda', imageUrl: '', sortIndex: 3, available: true },
-    { id: uuidv4(), restaurantId, name: 'Special Falooda', price: 169, category: 'Falooda', imageUrl: '', sortIndex: 4, available: true },
-    { id: uuidv4(), restaurantId, name: 'Avil Milk', price: 90, category: 'Falooda', imageUrl: '', sortIndex: 5, available: true },
-    { id: uuidv4(), restaurantId, name: 'SP Avil Milk', price: 110, category: 'Falooda', imageUrl: '', sortIndex: 6, available: true },
+    { id: uuidv4(), restaurantId, name: 'Normal Falooda', price: 119, category: 'Falooda', sortIndex: 0, available: true },
+    { id: uuidv4(), restaurantId, name: 'Mango Falooda', price: 119, category: 'Falooda', sortIndex: 1, available: true },
+    { id: uuidv4(), restaurantId, name: 'Dry Fruit Falooda', price: 139, category: 'Falooda', sortIndex: 2, available: true },
+    { id: uuidv4(), restaurantId, name: 'Rose Malai Falooda', price: 129, category: 'Falooda', sortIndex: 3, available: true },
+    { id: uuidv4(), restaurantId, name: 'Special Falooda', price: 169, category: 'Falooda', sortIndex: 4, available: true },
+    { id: uuidv4(), restaurantId, name: 'Avil Milk', price: 90, category: 'Falooda', sortIndex: 5, available: true },
+    { id: uuidv4(), restaurantId, name: 'SP Avil Milk', price: 110, category: 'Falooda', sortIndex: 6, available: true },
 
     // Cheran Special
-    { id: uuidv4(), restaurantId, name: 'Sizzling Brownie', price: 159, category: 'Cheran Special', imageUrl: '', sortIndex: 0, available: true },
-    { id: uuidv4(), restaurantId, name: 'Cocktail Shake', price: 149, category: 'Cheran Special', imageUrl: '', sortIndex: 1, available: true },
+    { id: uuidv4(), restaurantId, name: 'Sizzling Brownie', price: 159, category: 'Cheran Special', sortIndex: 0, available: true },
+    { id: uuidv4(), restaurantId, name: 'Cocktail Shake', price: 149, category: 'Cheran Special', sortIndex: 1, available: true },
   ];
+
+  const items = rawItems.map(item => ({
+    ...item,
+    imageUrl: getFoodImageUrl(item.name, item.category)
+  }));
 
   await MenuItemModel.insertMany(items);
   log('Seeded %d menu items for %s', items.length, restaurantId);

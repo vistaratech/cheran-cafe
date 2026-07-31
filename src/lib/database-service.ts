@@ -348,31 +348,33 @@ export const deleteCategory = async (id: string, restaurantId: string) => {
   return result.deletedCount > 0;
 };
 
+import { getFoodImageUrl } from '@/lib/food-images';
+
 const CHERAN_CAFE_FALLBACK_ITEMS: MenuItem[] = [
-  { id: '1', name: 'Egg Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '2', name: 'Paneer Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '3', name: 'Chicken Puffs', price: 30.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '4', name: 'Mushroom Puffs', price: 25.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '5', name: 'Veg Puffs', price: 20.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '6', name: 'Egg Roll', price: 35.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '7', name: 'Chicken Roll', price: 40.00, category: 'Snacks', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '8', name: 'Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '9', name: 'Lemon Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '10', name: 'Green Tea', price: 20.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '11', name: 'Badam', price: 25.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '12', name: 'Boost', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '13', name: 'Horlicks', price: 30.00, category: 'Hot', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '14', name: 'Mango Falooda', price: 119.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '15', name: 'Dry Fruit Falooda', price: 139.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '16', name: 'Rose Falooda', price: 129.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '17', name: 'Special Cheran Falooda', price: 169.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '18', name: 'Avil Milk', price: 90.00, category: 'Falooda', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '19', name: 'Cocktail Shake', price: 149.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '20', name: 'Royal Falooda', price: 159.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '21', name: 'Fruit Salad with Ice Cream', price: 99.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '22', name: 'Sizzling Brownie', price: 179.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '23', name: 'Choco Lava Cake', price: 89.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
-  { id: '24', name: 'KitKat Milkshake', price: 119.00, category: 'Cheran Special', imageUrl: '/placeholder-menu-item.jpg', sortIndex: 0, available: true },
+  { id: '1', name: 'Egg Puffs', price: 25.00, category: 'Snacks', imageUrl: getFoodImageUrl('Egg Puffs', 'Snacks'), sortIndex: 0, available: true },
+  { id: '2', name: 'Paneer Puffs', price: 25.00, category: 'Snacks', imageUrl: getFoodImageUrl('Paneer Puffs', 'Snacks'), sortIndex: 0, available: true },
+  { id: '3', name: 'Chicken Puffs', price: 30.00, category: 'Snacks', imageUrl: getFoodImageUrl('Chicken Puffs', 'Snacks'), sortIndex: 0, available: true },
+  { id: '4', name: 'Mushroom Puffs', price: 25.00, category: 'Snacks', imageUrl: getFoodImageUrl('Mushroom Puffs', 'Snacks'), sortIndex: 0, available: true },
+  { id: '5', name: 'Veg Puffs', price: 20.00, category: 'Snacks', imageUrl: getFoodImageUrl('Veg Puffs', 'Snacks'), sortIndex: 0, available: true },
+  { id: '6', name: 'Egg Roll', price: 35.00, category: 'Snacks', imageUrl: getFoodImageUrl('Egg Roll', 'Snacks'), sortIndex: 0, available: true },
+  { id: '7', name: 'Chicken Roll', price: 40.00, category: 'Snacks', imageUrl: getFoodImageUrl('Chicken Roll', 'Snacks'), sortIndex: 0, available: true },
+  { id: '8', name: 'Tea', price: 20.00, category: 'Hot', imageUrl: getFoodImageUrl('Tea', 'Hot'), sortIndex: 0, available: true },
+  { id: '9', name: 'Lemon Tea', price: 20.00, category: 'Hot', imageUrl: getFoodImageUrl('Lemon Tea', 'Hot'), sortIndex: 0, available: true },
+  { id: '10', name: 'Green Tea', price: 20.00, category: 'Hot', imageUrl: getFoodImageUrl('Green Tea', 'Hot'), sortIndex: 0, available: true },
+  { id: '11', name: 'Badam', price: 25.00, category: 'Hot', imageUrl: getFoodImageUrl('Badam', 'Hot'), sortIndex: 0, available: true },
+  { id: '12', name: 'Boost', price: 30.00, category: 'Hot', imageUrl: getFoodImageUrl('Boost', 'Hot'), sortIndex: 0, available: true },
+  { id: '13', name: 'Horlicks', price: 30.00, category: 'Hot', imageUrl: getFoodImageUrl('Horlicks', 'Hot'), sortIndex: 0, available: true },
+  { id: '14', name: 'Mango Falooda', price: 119.00, category: 'Falooda', imageUrl: getFoodImageUrl('Mango Falooda', 'Falooda'), sortIndex: 0, available: true },
+  { id: '15', name: 'Dry Fruit Falooda', price: 139.00, category: 'Falooda', imageUrl: getFoodImageUrl('Dry Fruit Falooda', 'Falooda'), sortIndex: 0, available: true },
+  { id: '16', name: 'Rose Falooda', price: 129.00, category: 'Falooda', imageUrl: getFoodImageUrl('Rose Falooda', 'Falooda'), sortIndex: 0, available: true },
+  { id: '17', name: 'Special Cheran Falooda', price: 169.00, category: 'Falooda', imageUrl: getFoodImageUrl('Special Cheran Falooda', 'Falooda'), sortIndex: 0, available: true },
+  { id: '18', name: 'Avil Milk', price: 90.00, category: 'Falooda', imageUrl: getFoodImageUrl('Avil Milk', 'Falooda'), sortIndex: 0, available: true },
+  { id: '19', name: 'Cocktail Shake', price: 149.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('Cocktail Shake', 'Cheran Special'), sortIndex: 0, available: true },
+  { id: '20', name: 'Royal Falooda', price: 159.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('Royal Falooda', 'Cheran Special'), sortIndex: 0, available: true },
+  { id: '21', name: 'Fruit Salad with Ice Cream', price: 99.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('Fruit Salad with Ice Cream', 'Cheran Special'), sortIndex: 0, available: true },
+  { id: '22', name: 'Sizzling Brownie', price: 179.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('Sizzling Brownie', 'Cheran Special'), sortIndex: 0, available: true },
+  { id: '23', name: 'Choco Lava Cake', price: 89.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('Choco Lava Cake', 'Cheran Special'), sortIndex: 0, available: true },
+  { id: '24', name: 'KitKat Milkshake', price: 119.00, category: 'Cheran Special', imageUrl: getFoodImageUrl('KitKat Milkshake', 'Cheran Special'), sortIndex: 0, available: true },
 ];
 
 let cachedMenuItems: MenuItem[] | null = null;
@@ -398,7 +400,7 @@ export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> =
           price: parseFloat(i.price),
           category: i.category,
           available: i.available ?? true,
-          imageUrl: i.image_url || '/placeholder-menu-item.jpg',
+          imageUrl: getFoodImageUrl(i.name, i.category, i.image_url),
           sortIndex: 0,
           createdAt: new Date(i.created_at || Date.now()),
           updatedAt: new Date(i.created_at || Date.now())
@@ -416,7 +418,10 @@ export const getMenuItems = async (restaurantId?: string): Promise<MenuItem[]> =
     const query = restaurantId ? { restaurantId } : {};
     const menuItems = await MenuItemModel.find(query).lean().maxTimeMS(3000);
     if (menuItems && menuItems.length > 0) {
-      cachedMenuItems = menuItems as any[];
+      cachedMenuItems = (menuItems as any[]).map(item => ({
+        ...item,
+        imageUrl: getFoodImageUrl(item.name, item.category, item.imageUrl)
+      }));
       lastMenuItemsFetchTime = now;
       return cachedMenuItems;
     }

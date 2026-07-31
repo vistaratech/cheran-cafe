@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { useCurrentOrderStoreCompat as useCurrentOrderStore } from '@/lib/stores/current-order-store'
 import { RupeeSymbol } from '@/components/ui/rupee-symbol'
+import { getFoodImageUrl } from '@/lib/food-images'
 
 interface RenderedCategory extends Category {
   depth: number;
@@ -199,6 +200,7 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
                 {itemsForActiveCategory.map(item => {
                   // Get badge count from memoized counts
                   const itemCount = badgeCounts[item.id] || 0;
+                  const itemImgUrl = getFoodImageUrl(item.name, item.category, item.imageUrl);
                   
                   return (
                     <Card 
@@ -207,8 +209,8 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
                       onClick={() => handleItemClick(item)}
                     >
                       <div className="w-full aspect-square relative bg-amber-900/5 flex items-center justify-center overflow-hidden">
-                          {item.imageUrl && !item.imageUrl.startsWith("https://placehold.co") && item.imageUrl !== '/placeholder-menu-item.jpg' ? (
-                              <Image src={item.imageUrl} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                          {itemImgUrl ? (
+                              <Image src={itemImgUrl} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
                               <Utensils className="w-1/2 h-1/2 text-amber-900/30" />
                           )}
@@ -235,6 +237,7 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
                 {itemsForActiveCategory.map(item => {
                   // Get badge count from memoized counts
                   const itemCount = badgeCounts[item.id] || 0;
+                  const itemImgUrl = getFoodImageUrl(item.name, item.category, item.imageUrl);
                   
                   return (
                     <Card 
@@ -244,8 +247,8 @@ export function MenuSelection({ menuItems, categories, onAddItem }: MenuSelectio
                     >
                       <div className="relative flex-shrink-0">
                         <div className="w-12 h-12 rounded-xl bg-amber-900/5 flex items-center justify-center overflow-hidden">
-                          {item.imageUrl && !item.imageUrl.startsWith("https://placehold.co") && item.imageUrl !== '/placeholder-menu-item.jpg' ? (
-                            <Image src={item.imageUrl} alt={item.name} width={48} height={48} className="rounded-xl object-cover" />
+                          {itemImgUrl ? (
+                            <Image src={itemImgUrl} alt={item.name} width={48} height={48} className="rounded-xl object-cover" />
                           ) : (
                             <Utensils className="w-6 h-6 text-amber-900/40" />
                           )}
